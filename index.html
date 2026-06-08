@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리 공장 MBTI | SAP Manufacturing AX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff; --surface2: #f0ede8;
+    --text: #1a1a18; --muted: #6b6860; --faint: #a09e9a;
+    --accent: #1a4fd6; --accent-light: #e8eefb;
+    --border: rgba(26,26,24,0.1); --border-strong: rgba(26,26,24,0.18);
+    --green: #0f6e56; --green-light: #e1f5ee;
+    --amber: #92400e; --amber-light: #fef3c7;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  body { font-family: 'IBM Plex Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem 4rem; }
+  .container { width: 100%; max-width: 580px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+  .topbar-logo { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--faint); }
+  .topbar-tag { font-size: 11px; font-weight: 500; color: var(--accent); background: var(--accent-light); padding: 4px 10px; border-radius: 20px; letter-spacing: .04em; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* START */
+  .start-screen-bg {
+    position: relative;
+    overflow: hidden;
+    background: #0070f2;
+    border-radius: var(--radius);
+    padding: 2.5rem 2rem 2rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  .sap-bubbles {
+    position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+  }
+  .sap-bubble {
+    position: absolute;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    color: rgba(255,255,255,0.08);
+    user-select: none;
+    animation: floatBubble linear infinite;
+  }
+  @keyframes floatBubble {
+    0%   { transform: translateY(0px) rotate(0deg); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translateY(-420px) rotate(15deg); opacity: 0; }
+  }
+  .start-hero {
+    position: relative; z-index: 1;
+  }
+  .start-icon { font-size: 48px; margin-bottom: 1rem; display: block; }
+  .start-hero h1 { font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin-bottom: .5rem; line-height: 1.3; color: #fff; }
+  .start-hero p { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 1.5rem; }
+  .start-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; margin-bottom: 1.5rem; }
+  .meta-chip { background: rgba(255,255,255,0.12); border-radius: var(--radius-sm); padding: .6rem .5rem; text-align: center; border: 1px solid rgba(255,255,255,0.18); }
+  .meta-chip .mc-n { font-size: 16px; font-weight: 600; display: block; font-family: 'Space Mono', monospace; color: #fff; }
+  .meta-chip .mc-l { font-size: 11px; color: rgba(255,255,255,0.65); display: block; margin-top: 2px; }
+  .axis-legend { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; margin-bottom: 1.5rem; }
+  .axis-chip { background: rgba(255,255,255,0.12); border-radius: 6px; padding: .45rem .7rem; font-size: 12px; color: rgba(255,255,255,0.9); text-align: left; border: 1px solid rgba(255,255,255,0.15); }
+  .axis-chip strong { font-weight: 600; font-family: 'Space Mono', monospace; margin-right: .3rem; color: #fff; }
+  .btn-primary { display: block; width: 100%; background: #fff; color: #0040b0; border: none; border-radius: var(--radius-sm); padding: .85rem; font-size: 15px; font-weight: 600; font-family: 'IBM Plex Sans KR', sans-serif; cursor: pointer; letter-spacing: -.01em; transition: opacity .15s, transform .1s; }
+  .btn-primary:hover { opacity: .9; }
+  .btn-primary:active { transform: scale(.98); }
+  .disclaimer { font-size: 12px; color: var(--faint); text-align: center; margin-top: .75rem; }
+
+  /* QUIZ */
+  .progress-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+  .progress-label { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--faint); }
+  .progress-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 1.25rem; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s ease; }
+  .quiz-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 1.75rem 1.5rem; margin-bottom: .75rem; }
+  .q-domain { font-size: 11px; font-weight: 500; letter-spacing: .06em; color: var(--accent); text-transform: uppercase; margin-bottom: .4rem; }
+  .q-axis { font-size: 11px; color: var(--faint); margin-bottom: .7rem; font-family: 'Space Mono', monospace; }
+  .q-text { font-size: 17px; font-weight: 500; line-height: 1.55; letter-spacing: -.01em; }
+  .options { display: flex; flex-direction: column; gap: .5rem; }
+  .opt-btn { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .9rem 1rem; text-align: left; cursor: pointer; display: flex; align-items: flex-start; gap: .75rem; transition: all .15s; font-family: 'IBM Plex Sans KR', sans-serif; }
+  .opt-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+  .opt-btn:active { transform: scale(.99); }
+  .opt-key { flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; color: var(--muted); margin-top: 1px; }
+  .opt-text { font-size: 14px; color: var(--text); line-height: 1.55; }
+
+  /* RESULT */
+  .result-hero { border-radius: var(--radius); padding: 2rem 1.5rem; margin-bottom: .75rem; text-align: center; }
+  .r-emoji { font-size: 44px; margin-bottom: .75rem; display: block; }
+  .r-code { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: .15em; margin-bottom: .3rem; opacity: .6; }
+  .r-name { font-size: 22px; font-weight: 600; letter-spacing: -.02em; margin-bottom: .75rem; line-height: 1.3; }
+  .r-desc { font-size: 13px; line-height: 1.7; text-align: left; border-radius: var(--radius-sm); padding: .85rem 1rem; }
+  .result-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: .75rem; }
+  .sec-title { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--faint); text-transform: uppercase; margin-bottom: 1rem; }
+  .axis-row { display: flex; align-items: center; gap: .75rem; margin-bottom: .6rem; }
+  .axis-lbl { font-size: 12px; color: var(--muted); width: 72px; flex-shrink: 0; }
+  .axis-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; position: relative; }
+  .axis-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+  .axis-score { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--faint); width: 50px; text-align: right; flex-shrink: 0; font-weight: 700; }
+  .sol-item { display: flex; gap: .75rem; padding: .75rem 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .sol-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .sol-num { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0; margin-top: 2px; width: 20px; }
+  .sol-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .sol-why { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .cta-box { border-radius: var(--radius-sm); padding: .9rem 1rem; font-size: 13px; line-height: 1.6; margin-bottom: .75rem; }
+  .badge-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; border: 1px solid; font-family: 'Space Mono', monospace; letter-spacing: .03em; }
+  .btn-ghost { display: block; width: 100%; background: transparent; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: .75rem; font-size: 13px; color: var(--muted); cursor: pointer; font-family: 'IBM Plex Sans KR', sans-serif; transition: all .15s; }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .divider { height: 1px; background: var(--border); margin: .75rem 0; }
+
+  /* CTA BUTTON */
+  .btn-cta {
+    display: flex; align-items: center; justify-content: center; gap: .5rem;
+    width: 100%; margin-bottom: .5rem;
+    background: var(--accent); color: #fff; border: none;
+    border-radius: var(--radius-sm); padding: .9rem 1.5rem;
+    font-size: 15px; font-weight: 600; font-family: 'IBM Plex Sans KR', sans-serif;
+    cursor: pointer; letter-spacing: -.01em;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn-cta:hover { opacity: .88; }
+  .btn-cta:active { transform: scale(.98); }
+  .result-disclaimer {
+    font-size: 11px; color: var(--faint); text-align: center;
+    margin-bottom: .75rem; line-height: 1.6;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); backdrop-filter: blur(3px);
+    z-index: 999; align-items: center; justify-content: center; padding: 1.5rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: var(--radius);
+    width: 100%; max-width: 480px; padding: 1.75rem 1.5rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .modal-tag {
+    font-size: 11px; font-weight: 600; letter-spacing: .06em;
+    color: var(--accent); background: var(--accent-light);
+    padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: .6rem;
+  }
+  .modal-title { font-size: 18px; font-weight: 600; letter-spacing: -.02em; margin-bottom: .3rem; }
+  .modal-sub { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 1.25rem; }
+  .form-grid { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.25rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+  .form-field { display: flex; flex-direction: column; gap: .3rem; }
+  .form-field.full { grid-column: 1 / -1; }
+  .form-field label {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+  .form-field input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: .6rem .75rem;
+    font-size: 14px; color: var(--text);
+    font-family: 'IBM Plex Sans KR', sans-serif;
+    outline: none; transition: border-color .15s, background .15s;
+  }
+  .form-field input:focus { border-color: var(--accent); background: var(--surface); }
+  .form-field input::placeholder { color: var(--faint); }
+  .form-field input.err { border-color: #ef4444; }
+  .modal-btns { display: flex; gap: .5rem; }
+  .modal-submit {
+    flex: 1; background: var(--text); color: #fff; border: none;
+    border-radius: var(--radius-sm); padding: .8rem;
+    font-size: 14px; font-weight: 600; font-family: 'IBM Plex Sans KR', sans-serif;
+    cursor: pointer; transition: opacity .15s;
+  }
+  .modal-submit:hover { opacity: .85; }
+  .modal-submit:disabled { opacity: .5; cursor: not-allowed; }
+  .modal-cancel {
+    background: transparent; border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm); padding: .8rem 1.1rem;
+    font-size: 14px; color: var(--muted); font-family: 'IBM Plex Sans KR', sans-serif;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .modal-cancel:hover { background: var(--surface2); }
+  .modal-success { text-align: center; padding: .75rem 0; }
+  .modal-success .s-icon { font-size: 44px; margin-bottom: .75rem; display: block; }
+  .modal-success h3 { font-size: 17px; font-weight: 600; margin-bottom: .4rem; }
+  .modal-success p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .modal-success .s-detail {
+    font-size: 12px; color: var(--faint); margin-top: .75rem;
+    background: var(--surface2); border-radius: var(--radius-sm); padding: .6rem .75rem;
+    text-align: left;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <span class="topbar-logo">SAP · AXIOUS</span>
+    <span class="topbar-tag">Manufacturing AX Assessment</span>
+  </div>
+
+  <!-- START -->
+  <div id="start" class="screen active">
+    <div class="start-screen-bg">
+      <!-- 떠다니는 SAP 로고 버블 -->
+      <div class="sap-bubbles" id="sap-bubbles"></div>
+      <div class="start-hero">
+        <span class="start-icon">🏭</span>
+        <h1>우리 공장 MBTI는?</h1>
+        <p>6문항으로 알아보는 Autonomous Manufacturing 성숙도 진단</p>
+        <div class="start-meta">
+          <div class="meta-chip"><span class="mc-n">6</span><span class="mc-l">문항</span></div>
+          <div class="meta-chip"><span class="mc-n">3분</span><span class="mc-l">소요</span></div>
+          <div class="meta-chip"><span class="mc-n">4가지</span><span class="mc-l">공장 유형</span></div>
+        </div>
+        <button class="btn-primary" onclick="startQuiz()">진단 시작하기 →</button>
+      </div>
+    </div>
+    <p class="disclaimer">제조 혁신 고객 가치 진단 도구</p>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="screen">
+    <div class="progress-row">
+      <span class="progress-label" id="qlabel">01 / 12</span>
+      <span class="progress-label" id="qpct">8%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="pbar" style="width:8%"></div></div>
+    <div class="quiz-card">
+      <div class="q-domain" id="qdomain"></div>
+      <div class="q-axis" id="qaxis"></div>
+      <div class="q-text" id="qtext"></div>
+    </div>
+    <div class="options" id="opts"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result" class="screen">
+    <div class="result-hero" id="r-hero">
+      <span class="r-emoji" id="r-emoji"></span>
+      <div class="r-code" id="r-code"></div>
+      <div class="r-name" id="r-name"></div>
+      <div class="badge-row" id="r-badges" style="justify-content:center"></div>
+      <div class="r-desc" id="r-desc"></div>
+    </div>
+    <div class="result-section">
+      <div class="sec-title">4축 성숙도 프로파일</div>
+      <div id="axis-bars"></div>
+    </div>
+    <div class="result-section">
+      <div class="sec-title">추천 SAP 솔루션 처방전</div>
+      <div id="sol-list"></div>
+    </div>
+    <div class="cta-box" id="cta-box"></div>
+
+    <!-- CTA 버튼 -->
+    <button class="btn-cta" onclick="openModal()">
+      <span>🔍</span> 정밀 진단 요청하기
+    </button>
+    <p class="result-disclaimer">* 본 결과는 간이 자가 진단으로, 실제 진단 결과를 반영하지 않습니다.</p>
+    <button class="btn-ghost" onclick="restart()">↺ 다시 진단하기</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal-box">
+    <div id="modal-form-view">
+      <div class="modal-tag">SAP Manufacturing AX</div>
+      <div class="modal-title">정밀 진단 요청</div>
+      <div class="modal-sub">귀사의 Autonomous Manufacturing 성숙도를 직접 분석해 드립니다. 아래 정보를 입력해 주세요.</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-field">
+            <label>회사명 <span style="color:#ef4444">*</span></label>
+            <input type="text" id="f-company" placeholder="(주)제조기업" />
+          </div>
+          <div class="form-field">
+            <label>이름 <span style="color:#ef4444">*</span></label>
+            <input type="text" id="f-name" placeholder="홍길동" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>조직명 <span style="color:#ef4444">*</span></label>
+            <input type="text" id="f-dept" placeholder="제조혁신팀" />
+          </div>
+          <div class="form-field">
+            <label>직급 <span style="color:#ef4444">*</span></label>
+            <input type="text" id="f-title" placeholder="팀장" />
+          </div>
+        </div>
+        <div class="form-field">
+          <label>이메일 <span style="color:#ef4444">*</span></label>
+          <input type="email" id="f-email" placeholder="name@company.com" />
+        </div>
+        <div class="form-field">
+          <label>남기고 싶은 메세지</label>
+          <input type="text" id="f-memo" placeholder="문의 사항이나 궁금한 점을 자유롭게 적어주세요" />
+        </div>
+      </div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeModal()">취소</button>
+        <button class="modal-submit" id="modal-submit-btn" onclick="submitForm()">요청 제출하기 →</button>
+      </div>
+    </div>
+    <div id="modal-success-view" class="modal-success" style="display:none">
+      <span class="s-icon">✅</span>
+      <h3>요청이 접수됐어요!</h3>
+      <p>SAP Manufacturing AX팀이 확인 후 빠르게 연락드릴게요.</p>
+      <div class="s-detail" id="success-detail"></div>
+      <button class="btn-primary" style="margin-top:1.25rem" onclick="closeModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── SAP 버블 애니메이션 ────────────────────────────────────────
+(function() {
+  const container = document.getElementById('sap-bubbles');
+  const words = ['SAP', 'SAP'];
+  const count = 18;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('span');
+    el.className = 'sap-bubble';
+    el.textContent = words[i % words.length];
+    const size = 14 + Math.floor(Math.random() * 32);
+    const left = Math.random() * 100;
+    const delay = Math.random() * 8;
+    const duration = 3 + Math.random() * 4;
+    const bottom = -10 - Math.random() * 20;
+    el.style.cssText = `font-size:${size}px;left:${left}%;bottom:${bottom}%;animation-delay:${delay}s;animation-duration:${duration}s;`;
+    container.appendChild(el);
+  }
+})();
+
+// ── 질문 데이터 ─────────────────────────────────────────────
+// 각 축: D(데이터), I(설비/AI), C(연결/통합), S(지속가능성)
+// 점수: -2 / 0 / +2 (축별 독립 합산)
+const questions = [
+  {
+    domain: "Foundation · 데이터 디지털화",
+    axis: "D축 · 데이터 성숙도",
+    text: "현장 생산 데이터는 어떻게 수집되고 있나요?",
+    opts: [
+      { t:"A", l:"작업자가 종이나 엑셀에 수기로 기록해요 (시스템 미연결)", s:{D:-2} },
+      { t:"B", l:"일부 공정은 자동 수집되지만 나머지는 수동이에요", s:{D:0} },
+      { t:"C", l:"대부분 MES/IoT로 실시간 자동 수집 + ERP 연계돼요", s:{D:2} }
+    ]
+  },
+  {
+    domain: "Intelligent Factory · 생산 모니터링",
+    axis: "D축 · 데이터 성숙도",
+    text: "제조 데이터를 어떻게 분석하고 의사결정에 활용하나요?",
+    opts: [
+      { t:"A", l:"이슈 발생 시에만 엑셀로 분석해요", s:{D:-2} },
+      { t:"B", l:"IoT 데이터 수집 후 분석 툴로 지속 모니터링 + 알림 제공해요", s:{D:1} },
+      { t:"C", l:"AI/ML로 잠재적 이슈를 예측하고 처방적 경고를 제공해요", s:{D:2, I:1} }
+    ]
+  },
+  {
+    domain: "Foundation · IT 아키텍처",
+    axis: "C축 · 통합 성숙도",
+    text: "공장 내 IT 시스템(ERP, MES, WMS 등)은 얼마나 통합되어 있나요?",
+    opts: [
+      { t:"A", l:"시스템마다 파편화 — 수작업 또는 파일로 데이터 전달해요", s:{C:-2} },
+      { t:"B", l:"핵심 시스템은 연결됐지만 실시간 소통은 제한적이에요", s:{C:0} },
+      { t:"C", l:"S/4HANA 기반으로 실시간 통합 아키텍처가 구축됐어요", s:{C:2} }
+    ]
+  },
+  {
+    domain: "Intelligent Asset · 설비 유지보수",
+    axis: "I축 · 설비/AI 지능화",
+    text: "설비 유지보수 전략은 어느 수준인가요?",
+    opts: [
+      { t:"A", l:"고장 나면 고쳐요 (사후 유지보수 위주)", s:{I:-2} },
+      { t:"B", l:"정기 예방 보전 + 조건 기반 유지보수(CBM)를 수행해요", s:{I:0} },
+      { t:"C", l:"AI 예측 정비(Predictive/Prescriptive Maintenance)로 선제 대응해요", s:{I:2} }
+    ]
+  },
+  {
+    domain: "Empowered People · 공급망 가시성",
+    axis: "C축 · 통합 성숙도",
+    text: "공급망 가시성과 파트너 협업은 어느 수준인가요?",
+    opts: [
+      { t:"A", l:"내부 공급망도 파악 어려움 — 전화/이메일로 수동 확인해요", s:{C:-2} },
+      { t:"B", l:"내부 공급망은 파악되지만 외부 파트너 정보는 제한적이에요", s:{C:0} },
+      { t:"C", l:"클라우드 플랫폼으로 협력사까지 실시간 가시성 확보해요", s:{C:2} }
+    ]
+  },
+  {
+    domain: "Sustainability · 탄소·에너지 관리",
+    axis: "S축 · 지속가능성 성숙도",
+    text: "공정별 탄소 배출량과 에너지 사용량을 어떻게 추적하나요?",
+    opts: [
+      { t:"A", l:"측정 자체가 안 돼요 — ESG 보고서 작성이 매우 어려워요", s:{S:-2} },
+      { t:"B", l:"엑셀로 집계하지만 실시간 데이터는 없어요 (분기/연간 집계)", s:{S:0} },
+      { t:"C", l:"공정별 탄소 발자국 자동 추적 + EU 배터리 규제 등 자동 리포팅해요", s:{S:2} }
+    ]
+  }
+];
+
+// ── 6가지 유형 ────────────────────────────────────────────
+// 분류 기준: D(데이터) + I(AI/설비) + C(연결) + S(지속가능성) 합산
+// 각 축은 -4~+4 범위, 총합 -16~+16
+// 유형은 점수 패턴으로 결정 (단순 총합 아님)
+// ── 솔루션 포트폴리오 참고 ──────────────────────────────────
+// Design:  SAP Integrated Product Development(PLM), SAP PLM SI
+// Plan:    SAP IBP (Integrated Business Planning)
+// Make:    SAP Digital Manufacturing
+// Operate: SAP Asset Performance Management(APM), SAP Field Service Management(FSM)
+// Sustain: SAP Sustainability Footprint Management, SAP S/4HANA EHS Environment Mgmt, SAP S/4HANA Product Compliance
+// AI:      SAP Joule
+// Core:    SAP S/4HANA
+
+const types = {
+  PIONEER: {
+    emoji: "🚀", name: "자율화 개척자", code: "PIONEER",
+    color: "#1a4fd6", bg: "#1a1a18", textColor: "#fff",
+    tags: ["AI 선도", "완전통합", "ESG 리더"],
+    desc: "축하해요! 귀사 공장은 Autonomous Manufacturing의 최전선에 있어요. 데이터·설비·공급망·ESG가 유기적으로 연결되어 AI가 스스로 판단하고 최적화하는 수준에 근접했습니다. 글로벌 제조 레퍼런스로서의 잠재력이 있어요.",
+    sols: [
+      { name: "SAP Joule", why: "AI 에이전트가 생산 이슈 자율 감지·처방 — 전 영역 Copilot으로 확장", domain: "AI" },
+      { name: "SAP Sustainability Footprint Management", why: "Scope 1~3 탄소 발자국 자동 계산 + Battery Passport·CBAM 선제 대응", domain: "Sustainability" },
+      { name: "SAP Asset Performance Management", why: "AI 기반 Prescriptive Maintenance로 무중단 생산 실현", domain: "Operate" }
+    ],
+    cta: "💡 귀사는 SAP Manufacturing Reference Customer 후보입니다.AX팀과 함께 글로벌 레퍼런스를 만들어보세요."
+  },
+  ACHIEVER: {
+    emoji: "📈", name: "착실한 우등생", code: "ACHIEVER",
+    color: "#0f6e56", bg: "#f0fdf4", textColor: "#1a1a18",
+    tags: ["데이터 강점", "통합 진행중", "AI 도입 준비"],
+    desc: "기초는 탄탄해요! 데이터 수집과 일부 시스템 통합이 잘 되어 있지만, 공정 간 데이터 사일로와 AI 활용 부재가 아쉬워요. 연결과 자동화가 다음 도약의 열쇠입니다.",
+    sols: [
+      { name: "SAP IBP (Integrated Business Planning)", why: "수요·공급·재고 AI 통합 계획으로 납기 정확도 향상", domain: "Plan" },
+      { name: "SAP Digital Manufacturing", why: "MES-S/4HANA 실시간 연계로 공정 사일로 제거 + 페이퍼리스 현장", domain: "Make" },
+      { name: "SAP Joule", why: "생산 KPI 자연어 조회·이상 감지 자동화로 의사결정 가속", domain: "AI" }
+    ],
+    cta: "💡 현재 70% 완성된 그림을 완성할 시점이에요. SAP AX팀과 통합 로드맵을 함께 그려봐요."
+  },
+  DREAMER: {
+    emoji: "💭", name: "비전은 있는데...", code: "DREAMER",
+    color: "#6d28d9", bg: "#f5f3ff", textColor: "#1a1a18",
+    tags: ["DX 의지 있음", "현장 실행 부족", "Quick Win 필요"],
+    desc: "경영진의 DX 의지와 전략은 있지만 현장 실행이 따라가지 못하고 있어요. 특정 영역의 강점은 있지만 전체 가치 사슬 연결이 부족해요. Quick Win으로 현장의 신뢰를 먼저 잡아야 해요.",
+    sols: [
+      { name: "SAP S/4HANA (RISE with SAP)", why: "클라우드 전환으로 현장 가시성 확보 — 빠른 구축이 핵심", domain: "Core" },
+      { name: "SAP Digital Manufacturing", why: "파일럿 라인부터 MES 디지털화로 경영진·현장 공감대 형성", domain: "Make" },
+      { name: "SAP Asset Performance Management", why: "IoT·ML 기반 예측 정비로 설비 강점을 전사 연계로 확장", domain: "Operate" }
+    ],
+    cta: "💡 전략과 현장 사이의 갭을 메우는 것이 핵심이에요. Quick Assssement 진단을 제안드려요."
+  },
+  SURVIVOR: {
+    emoji: "🏋️", name: "버티기 전문가", code: "SURVIVOR",
+    color: "#b91c1c", bg: "#fff1f2", textColor: "#1a1a18",
+    tags: ["경험 의존", "디지털화 초기", "리스크 높음"],
+    desc: "지금까지 베테랑 숙련공의 경험과 사람으로 버텨왔어요. 내부 최적화는 어느 정도 됐지만 외부 연결과 디지털화가 크게 부족해요. 그 분들이 은퇴하면 암묵지가 사라집니다. 디지털화는 선택이 아니라 생존 문제예요.",
+    sols: [
+      { name: "SAP S/4HANA (RISE with SAP)", why: "ERP 기반 디지털화 첫걸음 — 데이터 신뢰성 확보부터", domain: "Core" },
+      { name: "SAP Asset Performance Management", why: "설비 이력·FMEA 디지털화로 베테랑 암묵지 시스템화", domain: "Operate" },
+      { name: "SAP Digital Manufacturing", why: "현장 작업지시 디지털화로 수작업 종이 의존 탈피", domain: "Make" }
+    ],
+    cta: "💡 지금 시작하지 않으면 다음 세대가 없습니다. 기초 디지털화부터 같이 시작해요."
+  }
+};
+
+const axisColors = {D:"#1a4fd6", I:"#0f6e56", C:"#92400e", S:"#6d28d9"};
+const axisNames = {D:"데이터·디지털화", I:"설비·AI 지능화", C:"연결·통합", S:"지속가능성"};
+
+let scores = {D:0, I:0, C:0, S:0};
+let qi = 0;
+
+function startQuiz() { show("quiz"); renderQ(); }
+
+function renderQ() {
+  const q = questions[qi];
+  const pct = Math.round(((qi+1)/questions.length)*100);
+  document.getElementById("qlabel").textContent = String(qi+1).padStart(2,"0") + " / " + questions.length;
+  document.getElementById("qpct").textContent = pct + "%";
+  document.getElementById("pbar").style.width = pct + "%";
+  document.getElementById("qdomain").textContent = q.domain;
+  document.getElementById("qaxis").textContent = "▸ " + q.axis;
+  document.getElementById("qtext").textContent = q.text;
+  const opts = document.getElementById("opts");
+  opts.innerHTML = "";
+  q.opts.forEach(o => {
+    const b = document.createElement("button");
+    b.className = "opt-btn";
+    b.innerHTML = `<span class="opt-key">${o.t}</span><span class="opt-text">${o.l}</span>`;
+    b.onclick = () => pick(o.s);
+    opts.appendChild(b);
+  });
+}
+
+function pick(s) {
+  Object.entries(s).forEach(([k,v]) => { scores[k] = (scores[k]||0) + v; });
+  qi++;
+  if (qi >= questions.length) showResult();
+  else renderQ();
+}
+
+// ── 분류 로직 (패턴 기반) ─────────────────────────────────
+// D, I, C, S 각 -8~+8 범위
+// HIGH: >= 2, LOW: <= -2, MID: -1~1
+function classify() {
+  const {D, I, C, S} = scores;
+  const total = D + I + C + S;
+
+  if (total >= 8) return "PIONEER";
+  if (D >= 1 && C >= 1) return "ACHIEVER";
+  if (total <= -3) return "SURVIVOR";
+  return "DREAMER";
+}
+
+function showResult() {
+  show("result");
+  const key = classify();
+  const t = types[key];
+
+  // 히어로
+  const hero = document.getElementById("r-hero");
+  hero.style.background = t.bg;
+  hero.style.color = t.textColor;
+  document.getElementById("r-emoji").textContent = t.emoji;
+  document.getElementById("r-code").textContent = "공장 유형 · " + t.code;
+  document.getElementById("r-name").textContent = t.name;
+  document.getElementById("r-name").style.color = t.textColor;
+
+  // 뱃지
+  const badges = document.getElementById("r-badges");
+  badges.innerHTML = t.tags.map(tag =>
+    `<span class="badge" style="color:${t.color};border-color:${t.color};background:rgba(255,255,255,0.5)">${tag}</span>`
+  ).join("");
+
+  // 설명
+  const desc = document.getElementById("r-desc");
+  desc.textContent = t.desc;
+  desc.style.background = "rgba(255,255,255,0.15)";
+  desc.style.color = t.textColor;
+
+  // 축 프로파일
+  const maxVal = 8;
+  const bars = document.getElementById("axis-bars");
+  bars.innerHTML = "";
+  Object.entries(scores).forEach(([k,v]) => {
+    const pct = Math.max(4, Math.min(96, Math.round((v + maxVal)/(maxVal*2)*100)));
+    const sign = v > 0 ? "+" + v : String(v);
+    const level = v >= 3 ? "HIGH" : v >= 0 ? "MID" : "LOW";
+    const levelColor = v >= 3 ? "#0f6e56" : v >= 0 ? "#92400e" : "#b91c1c";
+    bars.innerHTML += `
+      <div class="axis-row">
+        <span class="axis-lbl">${axisNames[k]}</span>
+        <div class="axis-track">
+          <div class="axis-fill" style="width:${pct}%;background:${axisColors[k]}"></div>
+        </div>
+        <span class="axis-score" style="color:${levelColor}">${sign} <span style="font-size:9px">${level}</span></span>
+      </div>`;
+  });
+
+  // 솔루션
+  const sl = document.getElementById("sol-list");
+  sl.innerHTML = "";
+  const domainColor = {
+    "Core":"#1a4fd6","Design":"#7c3aed","Plan":"#0369a1",
+    "Make":"#0f6e56","Operate":"#92400e","Sustainability":"#166534","AI":"#9d174d"
+  };
+  t.sols.forEach((s, i) => {
+    const dc = domainColor[s.domain] || "#555";
+    sl.innerHTML += `<div class="sol-item">
+      <span class="sol-num">0${i+1}</span>
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:3px">
+          <span class="sol-name">${s.name}</span>
+          <span style="font-size:10px;font-weight:600;color:${dc};background:${dc}18;padding:2px 7px;border-radius:10px;flex-shrink:0">${s.domain}</span>
+        </div>
+        <div class="sol-why">${s.why}</div>
+      </div>
+    </div>`;
+  });
+
+  // CTA
+  const cta = document.getElementById("cta-box");
+  cta.textContent = t.cta;
+  cta.style.background = t.bg;
+  cta.style.color = t.color;
+  cta.style.border = `1px solid ${t.color}33`;
+}
+
+function restart() {
+  scores = {D:0, I:0, C:0, S:0}; qi = 0;
+  show("start");
+}
+
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+// ── 모달 ─────────────────────────────────────────────────────
+// 진단 결과 요약 (제출 시 함께 저장될 데이터)
+function getResultSummary() {
+  const key = classify();
+  const t = types[key];
+  return {
+    type_code: t.code,
+    type_name: t.name,
+    score_D: scores.D,
+    score_I: scores.I,
+    score_C: scores.C,
+    score_S: scores.S,
+    total: scores.D + scores.I + scores.C + scores.S,
+    timestamp: new Date().toLocaleString("ko-KR")
+  };
+}
+
+function openModal() {
+  // 폼 초기화
+  ["f-company","f-name","f-dept","f-title","f-email"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ""; el.classList.remove("err"); }
+  });
+  document.getElementById("modal-form-view").style.display = "block";
+  document.getElementById("modal-success-view").style.display = "none";
+  document.getElementById("modal-overlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById("modal-overlay")) closeModal();
+}
+
+function validateEmail(v) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+function submitForm() {
+  const company = document.getElementById("f-company").value.trim();
+  const name    = document.getElementById("f-name").value.trim();
+  const dept    = document.getElementById("f-dept").value.trim();
+  const title   = document.getElementById("f-title").value.trim();
+  const email   = document.getElementById("f-email").value.trim();
+  const memo    = document.getElementById("f-memo").value.trim();
+
+  // 유효성 검사
+  let hasErr = false;
+  [["f-company", !company], ["f-name", !name], ["f-dept", !dept], ["f-title", !title], ["f-email", !email || !validateEmail(email)]].forEach(([id, cond]) => {
+    const el = document.getElementById(id);
+    if (cond) { el.classList.add("err"); hasErr = true; }
+    else el.classList.remove("err");
+  });
+  if (hasErr) return;
+
+  const btn = document.getElementById("modal-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "제출 중...";
+
+  // 결과 데이터 수집
+  const result = getResultSummary();
+
+  // ── Google Sheets 연동 ──────────────────────────────────────
+  const SHEET_URL = "https://script.google.com/macros/s/AKfycbxOCpdeuJCaGdmIk2xAJDWGVi2SeXvg7O7vvvag-a0e0TieDtelT-v8kn78ygtiIyNC/exec";
+  const params = new URLSearchParams({ company, name, dept, title, email, memo, ...result });
+  new Image().src = `${SHEET_URL}?${params}`;
+  // ────────────────────────────────────────────────────────────
+
+  // console에 데이터 출력 (개발 확인용 — Sheets 연동 전)
+  console.log({ company, name, dept, title, email, ...result });
+
+  // 성공 화면 전환 (300ms 딜레이로 제출 느낌)
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = "요청 제출하기 →";
+    document.getElementById("modal-form-view").style.display = "none";
+    document.getElementById("success-detail").innerHTML =
+      `<strong>회사</strong> ${company} &nbsp;|&nbsp; <strong>담당자</strong> ${name}${dept ? " · " + dept : ""}${title ? " " + title : ""}<br>` +
+      `<strong>이메일</strong> ${email}<br>` +
+      `<strong>진단 유형</strong> ${result.type_name} (${result.type_code}) &nbsp;|&nbsp; <strong>총점</strong> ${result.total > 0 ? "+" : ""}${result.total}`;
+    document.getElementById("modal-success-view").style.display = "block";
+  }, 300);
+}
+</script>
+</body>
+</html>
