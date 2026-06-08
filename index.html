@@ -213,7 +213,7 @@
       <div class="start-hero">
         <span class="start-icon">🏭</span>
         <h1>우리 공장 MBTI는?</h1>
-        <p>6문항으로 알아보는 Autonomous Manufacturing 성숙도 진단</p>
+        <p>6문항으로 알아보는 Manufacturing AX 성숙도 진단</p>
         <div class="start-meta">
           <div class="meta-chip"><span class="mc-n">6</span><span class="mc-l">문항</span></div>
           <div class="meta-chip"><span class="mc-n">3분</span><span class="mc-l">소요</span></div>
@@ -274,7 +274,7 @@
     <div id="modal-form-view">
       <div class="modal-tag">SAP Manufacturing AX</div>
       <div class="modal-title">정밀 진단 요청</div>
-      <div class="modal-sub">귀사의 Autonomous Manufacturing 성숙도를 직접 분석해 드립니다. 아래 정보를 입력해 주세요.</div>
+      <div class="modal-sub">귀사의 Manufacturing AX 성숙도를 직접 분석해 드립니다. 아래 정보를 입력해 주세요.</div>
       <div class="form-grid">
         <div class="form-row">
           <div class="form-field">
@@ -305,6 +305,9 @@
           <input type="text" id="f-memo" placeholder="문의 사항이나 궁금한 점을 자유롭게 적어주세요" />
         </div>
       </div>
+      <p style="font-size:11px;color:var(--faint);line-height:1.6;margin-bottom:1rem;">
+        위에 개인 데이터를 입력하고 제출을 클릭하면 <a href="https://www.sap.com/korea/about/legal/privacy.html" target="_blank" style="color:var(--accent);text-decoration:underline;">개인정보보호정책</a>에 설명된대로 SAP가 귀하의 특수 범주의 데이터를 처리하는 것에 동의하게 됩니다. 여기에 제공해주신 모든 정보는 SAP <a href="https://www.sap.com/korea/about/legal/privacy.html" target="_blank" style="color:var(--accent);text-decoration:underline;">개인정보보호정책</a>에 따라 사용됩니다.
+      </p>
       <div class="modal-btns">
         <button class="modal-cancel" onclick="closeModal()">취소</button>
         <button class="modal-submit" id="modal-submit-btn" onclick="submitForm()">요청 제출하기 →</button>
@@ -424,7 +427,7 @@ const types = {
     emoji: "🚀", name: "자율화 개척자", code: "PIONEER",
     color: "#1a4fd6", bg: "#1a1a18", textColor: "#fff",
     tags: ["AI 선도", "완전통합", "ESG 리더"],
-    desc: "축하해요! 귀사 공장은 Autonomous Manufacturing의 최전선에 있어요. 데이터·설비·공급망·ESG가 유기적으로 연결되어 AI가 스스로 판단하고 최적화하는 수준에 근접했습니다. 글로벌 제조 레퍼런스로서의 잠재력이 있어요.",
+    desc: "축하해요! 귀사 공장은 Manufacturing AX의 최전선에 있어요. 데이터·설비·공급망·ESG가 유기적으로 연결되어 AI가 스스로 판단하고 최적화하는 수준에 근접했습니다. 글로벌 제조 레퍼런스로서의 잠재력이 있어요.",
     sols: [
       { name: "SAP Joule", why: "AI 에이전트가 생산 이슈 자율 감지·처방 — 전 영역 Copilot으로 확장", domain: "AI" },
       { name: "SAP Sustainability Footprint Management", why: "Scope 1~3 탄소 발자국 자동 계산 + Battery Passport·CBAM 선제 대응", domain: "Sustainability" },
@@ -475,6 +478,7 @@ const axisNames = {D:"데이터·디지털화", I:"설비·AI 지능화", C:"연
 
 let scores = {D:0, I:0, C:0, S:0};
 let qi = 0;
+let answers = [];
 
 function startQuiz() { show("quiz"); renderQ(); }
 
@@ -493,13 +497,14 @@ function renderQ() {
     const b = document.createElement("button");
     b.className = "opt-btn";
     b.innerHTML = `<span class="opt-key">${o.t}</span><span class="opt-text">${o.l}</span>`;
-    b.onclick = () => pick(o.s);
+    b.onclick = () => pick(o.s, o.l);
     opts.appendChild(b);
   });
 }
 
-function pick(s) {
+function pick(s, label) {
   Object.entries(s).forEach(([k,v]) => { scores[k] = (scores[k]||0) + v; });
+  answers.push(label);
   qi++;
   if (qi >= questions.length) showResult();
   else renderQ();
@@ -593,7 +598,7 @@ function showResult() {
 }
 
 function restart() {
-  scores = {D:0, I:0, C:0, S:0}; qi = 0;
+  scores = {D:0, I:0, C:0, S:0}; qi = 0; answers = [];
   show("start");
 }
 
@@ -670,7 +675,11 @@ function submitForm() {
 
   // ── Google Sheets 연동 ──────────────────────────────────────
   const SHEET_URL = "https://script.google.com/macros/s/AKfycbxOCpdeuJCaGdmIk2xAJDWGVi2SeXvg7O7vvvag-a0e0TieDtelT-v8kn78ygtiIyNC/exec";
-  const params = new URLSearchParams({ company, name, dept, title, email, memo, ...result });
+  const params = new URLSearchParams({
+    company, name, dept, title, email, memo, ...result,
+    q1: answers[0]||"", q2: answers[1]||"", q3: answers[2]||"",
+    q4: answers[3]||"", q5: answers[4]||"", q6: answers[5]||""
+  });
   new Image().src = `${SHEET_URL}?${params}`;
   // ────────────────────────────────────────────────────────────
 
@@ -690,5 +699,7 @@ function submitForm() {
   }, 300);
 }
 </script>
+<!-- 숨겨진 POST 전송용 iframe + form -->
+<iframe name="hidden-submit" style="display:none"></iframe>
 </body>
 </html>
